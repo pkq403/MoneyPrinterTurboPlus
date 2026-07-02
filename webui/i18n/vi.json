@@ -162,6 +162,11 @@
     "Coverr API Key deleted successfully": "Xóa API Key Coverr thành công",
     "Advanced Video Settings": "Cài Đặt Video Nâng Cao",
     "Video Encoder": "Bộ Mã Hóa Video",
-    "Video Encoder Help": "Tùy chọn nâng cao. libx264 là lựa chọn mặc định an toàn nhất. Khi chọn bộ mã hóa phần cứng, ứng dụng sẽ tự chuyển về libx264 nếu FFmpeg, GPU hoặc driver hiện tại không hỗ trợ."
+    "Video Encoder Help": "Tùy chọn nâng cao. libx264 là lựa chọn mặc định an toàn nhất. Khi chọn bộ mã hóa phần cứng, ứng dụng sẽ tự chuyển về libx264 nếu FFmpeg, GPU hoặc driver hiện tại không hỗ trợ.",
+    "Tavily News Settings": "**Cài đặt tin tức Tavily**",
+    "Tavily API Key": "Khóa API Tavily ([Lấy khóa](https://tavily.com))",
+    "Search Latest News (Tavily)": "Tìm tin tức mới nhất (Tavily)",
+    "Search Latest News (Tavily) Help": "Tìm kiếm tin tức mới nhất về chủ đề video qua Tavily và cung cấp cho LLM để kịch bản có thể tham chiếu sự kiện hiện tại. Yêu cầu khóa API Tavily được cấu hình trong Cài đặt cơ bản.",
+    "Unknown": "Không xác định"
   }
 }

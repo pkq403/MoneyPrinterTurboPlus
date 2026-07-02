@@ -17,12 +17,19 @@ def generate_script(task_id, params):
     logger.info("\n\n## generating video script")
     video_script = params.video_script.strip()
     if not video_script:
+        # Tavily 新闻检索：优先用每任务开关，回退到 config.toml 的全局默认。
+        # 仅当显式或默认开启、且配置了 tavily_api_key 时才会真正请求。
+        enable_news_search = bool(
+            getattr(params, "tavily_search_enabled", False)
+            or config.app.get("tavily_search_enabled", False)
+        )
         video_script = llm.generate_script(
             video_subject=params.video_subject,
             language=params.video_language,
             paragraph_number=params.paragraph_number,
             video_script_prompt=params.video_script_prompt,
             custom_system_prompt=params.custom_system_prompt,
+            enable_news_search=enable_news_search,
         )
     else:
         logger.debug(f"video script: \n{video_script}")
@@ -126,7 +133,7 @@ def resolve_custom_audio_file(task_id: str, custom_audio_file: str | None) -> st
 
 
 def generate_audio(task_id, params, video_script):
-    '''
+    """
     Generate audio for the video script.
     If a custom audio file is provided, it will be used directly.
     There will be no subtitle maker object returned in this case.
@@ -135,7 +142,7 @@ def generate_audio(task_id, params, video_script):
         - audio_file: path to the generated or provided audio file
         - audio_duration: duration of the audio in seconds
         - sub_maker: subtitle maker object if TTS is used, None otherwise
-    '''
+    """
     logger.info("\n\n## generating audio")
     # /audio 和 /subtitle 请求模型不包含 custom_audio_file，
     # 这里统一做兼容读取，避免直调接口时抛属性错误。
@@ -185,14 +192,15 @@ def generate_audio(task_id, params, video_script):
             return None, None, None
         return custom_audio_file, audio_duration, None
 
+
 def generate_subtitle(task_id, params, video_script, sub_maker, audio_file):
-    '''
+    """
     Generate subtitle for the video script.
     If subtitle generation is disabled or no subtitle maker is provided, it will return an empty string.
     Otherwise, it will generate the subtitle using the specified provider.
     Returns:
         - subtitle_path: path to the generated subtitle file
-    '''
+    """
     logger.info("\n\n## generating subtitle")
     if not params.subtitle_enabled:
         return ""
@@ -439,7 +447,10 @@ def start(task_id, params: VideoParams, stop_at: str = "video"):
 
     # 7. Cross-post to social platforms (if enabled)
     cross_post_results = []
-    if upload_post.upload_post_service.is_configured() and upload_post.upload_post_service.auto_upload:
+    if (
+        upload_post.upload_post_service.is_configured()
+        and upload_post.upload_post_service.auto_upload
+    ):
         platforms = upload_post.upload_post_service.platforms
         logger.info(f"\n\n## cross-posting videos to {', '.join(platforms)}")
 
@@ -466,10 +477,12 @@ def start(task_id, params: VideoParams, stop_at: str = "video"):
                 youtube_extra=youtube_extra,
             )
             cross_post_results.append(result)
-            if result.get('success'):
+            if result.get("success"):
                 logger.info(f"✅ Cross-posted: {video_path}")
             else:
-                logger.warning(f"⚠️ Failed to cross-post: {video_path} - {result.get('error', 'Unknown error')}")
+                logger.warning(
+                    f"⚠️ Failed to cross-post: {video_path} - {result.get('error', 'Unknown error')}"
+                )
 
     kwargs = {
         "videos": final_video_paths,

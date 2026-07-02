@@ -164,6 +164,11 @@
     "Coverr API Key deleted successfully": "Kunci API Coverr berhasil dihapus",
     "Advanced Video Settings": "Pengaturan Video Lanjutan",
     "Video Encoder": "Encoder Video",
-    "Video Encoder Help": "Opsi lanjutan. libx264 adalah default teraman. Saat encoder perangkat keras dipilih, aplikasi akan kembali ke libx264 jika FFmpeg, GPU, atau driver saat ini tidak dapat menggunakannya."
+    "Video Encoder Help": "Opsi lanjutan. libx264 adalah default teraman. Saat encoder perangkat keras dipilih, aplikasi akan kembali ke libx264 jika FFmpeg, GPU, atau driver saat ini tidak dapat menggunakannya.",
+    "Tavily News Settings": "**Pengaturan Berita Tavily**",
+    "Tavily API Key": "Kunci API Tavily ([Dapatkan Kunci](https://tavily.com))",
+    "Search Latest News (Tavily)": "Cari berita terbaru (Tavily)",
+    "Search Latest News (Tavily) Help": "Mengambil berita terbaru tentang topik video melalui Tavily dan memberikannya ke LLM agar skrip dapat merujuk peristiwa terkini. Memerlukan kunci API Tavily yang dikonfigurasi di Pengaturan Dasar.",
+    "Unknown": "Tidak diketahui"
   }
 }

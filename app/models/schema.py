@@ -84,8 +84,10 @@ class VideoParams(BaseModel):
     video_materials: Optional[List[MaterialInfo]] = (
         None  # Materials used to generate the video
     )
-    
-    custom_audio_file: Optional[str] = None  # Custom audio file path, will ignore TTS and can still use Whisper subtitles
+
+    custom_audio_file: Optional[str] = (
+        None  # Custom audio file path, will ignore TTS and can still use Whisper subtitles
+    )
     video_language: Optional[str] = ""  # auto detect
 
     voice_name: Optional[str] = ""
@@ -96,7 +98,9 @@ class VideoParams(BaseModel):
     bgm_volume: Optional[float] = 0.2
 
     subtitle_enabled: Optional[bool] = True
-    subtitle_position: Optional[str] = config.ui.get("subtitle_position", "bottom")  # top, bottom, center, custom
+    subtitle_position: Optional[str] = config.ui.get(
+        "subtitle_position", "bottom"
+    )  # top, bottom, center, custom
     custom_position: float = config.ui.get("custom_position", 70.0)
     font_name: Optional[str] = "STHeitiMedium.ttc"
     text_fore_color: Optional[str] = "#FFFFFF"
@@ -110,6 +114,9 @@ class VideoParams(BaseModel):
     paragraph_number: int = Field(default=1, ge=1, le=10)
     video_script_prompt: str = Field(default="", max_length=2000)
     custom_system_prompt: str = Field(default="", max_length=8000)
+    # 可选：生成脚本前用 Tavily 检索最新新闻并注入 LLM 上下文。
+    # 需在 config.toml / WebUI 配置 tavily_api_key 才会真正生效；默认关闭，行为不变。
+    tavily_search_enabled: Optional[bool] = False
 
 
 class SubtitleRequest(BaseModel):
@@ -161,6 +168,7 @@ class VideoScriptParams:
     paragraph_number: int = Field(default=1, ge=1, le=10)
     video_script_prompt: str = Field(default="", max_length=2000)
     custom_system_prompt: str = Field(default="", max_length=8000)
+    tavily_search_enabled: bool = False
 
 
 class VideoTermsParams:
@@ -351,6 +359,7 @@ class BgmUploadResponse(BaseResponse):
             },
         }
 
+
 class VideoMaterialRetrieveResponse(BaseResponse):
     class Config:
         json_schema_extra = {
@@ -368,6 +377,7 @@ class VideoMaterialRetrieveResponse(BaseResponse):
                 },
             },
         }
+
 
 class VideoMaterialUploadResponse(BaseResponse):
     class Config:

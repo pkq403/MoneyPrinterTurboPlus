@@ -29,6 +29,7 @@ def generate_video_script(request: Request, body: VideoScriptRequest):
         paragraph_number=body.paragraph_number,
         video_script_prompt=body.video_script_prompt,
         custom_system_prompt=body.custom_system_prompt,
+        enable_news_search=getattr(body, "tavily_search_enabled", False),
     )
     response = {"video_script": video_script}
     return utils.get_response(200, response)
@@ -55,9 +56,7 @@ def generate_video_terms(request: Request, body: VideoTermsRequest):
     response_model=VideoSocialMetadataResponse,
     summary="Generate social publishing metadata",
 )
-def generate_video_social_metadata(
-    request: Request, body: VideoSocialMetadataRequest
-):
+def generate_video_social_metadata(request: Request, body: VideoSocialMetadataRequest):
     metadata = llm.generate_social_metadata(
         video_subject=body.video_subject,
         video_script=body.video_script,

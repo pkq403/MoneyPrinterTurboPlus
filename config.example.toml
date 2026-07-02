@@ -73,6 +73,20 @@ twelvelabs_rerank_terms = false
 # twelvelabs_marengo_model = "marengo3.0"
 # twelvelabs_pegasus_model = "pegasus1.5"
 
+# Tavily News Search (optional) — https://tavily.com
+# When enabled, MoneyPrinterTurbo searches the latest news about the video
+# subject via Tavily and feeds a compact digest into the LLM script prompt,
+# so generated scripts can reference current events instead of relying only
+# on the model's training data.
+# Configure a key from the Tavily dashboard (https://app.tavily.com) and set
+# tavily_search_enabled = true. Leave the key empty to keep behavior unchanged.
+# You can also toggle it per-task in the WebUI "Advanced Script Settings".
+tavily_api_key = ""
+tavily_search_enabled = false
+# Optional overrides (defaults shown):
+# tavily_max_results = 5            # 1-10
+# tavily_topic = "news"             # "news" or "general"
+
 # 支持的提供商 (Supported providers):
 #   openai
 #   aihubmix   (OpenAI-compatible AI model gateway)

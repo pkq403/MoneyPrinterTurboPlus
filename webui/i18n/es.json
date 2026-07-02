@@ -164,6 +164,11 @@
     "Coverr API Key deleted successfully": "API Key de Coverr eliminada correctamente",
     "Advanced Video Settings": "Configuración avanzada de vídeo",
     "Video Encoder": "Codificador de vídeo",
-    "Video Encoder Help": "Opción avanzada. libx264 es el predeterminado más seguro. Cuando se selecciona un codificador de hardware, la aplicación vuelve a libx264 si el FFmpeg, GPU o controlador actuales no pueden usarlo."
+    "Video Encoder Help": "Opción avanzada. libx264 es el predeterminado más seguro. Cuando se selecciona un codificador de hardware, la aplicación vuelve a libx264 si el FFmpeg, GPU o controlador actuales no pueden usarlo.",
+    "Tavily News Settings": "**Ajustes de noticias de Tavily**",
+    "Tavily API Key": "Clave API de Tavily ([Obtener clave](https://tavily.com))",
+    "Search Latest News (Tavily)": "Buscar últimas noticias (Tavily)",
+    "Search Latest News (Tavily) Help": "Busca las últimas noticias sobre el tema del vídeo mediante Tavily y las pasa al LLM para que el guion pueda referenciar actualidad. Requiere una clave API de Tavily configurada en Ajustes básicos.",
+    "Unknown": "Desconocido"
   }
 }

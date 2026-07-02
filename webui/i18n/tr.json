@@ -162,6 +162,11 @@
     "Coverr API Key deleted successfully": "Coverr API Anahtarı başarıyla silindi",
     "Advanced Video Settings": "Gelişmiş Video Ayarları",
     "Video Encoder": "Video Kodlayıcı",
-    "Video Encoder Help": "Gelişmiş seçenek. libx264 en güvenli varsayılandır. Donanım kodlayıcı seçildiğinde mevcut FFmpeg, GPU veya sürücü bunu kullanamıyorsa uygulama libx264'ye geri döner."
+    "Video Encoder Help": "Gelişmiş seçenek. libx264 en güvenli varsayılandır. Donanım kodlayıcı seçildiğinde mevcut FFmpeg, GPU veya sürücü bunu kullanamıyorsa uygulama libx264'ye geri döner.",
+    "Tavily News Settings": "**Tavily Haber Ayarları**",
+    "Tavily API Key": "Tavily API Anahtarı ([Anahtar Al](https://tavily.com))",
+    "Search Latest News (Tavily)": "Son haberleri ara (Tavily)",
+    "Search Latest News (Tavily) Help": "Tavily aracılığıyla video konusuyla ilgili en son haberleri çeker ve LLM'e iletir, böylece senaryo güncel olaylara atıfta bulunabilir. Temel Ayarlar'da yapılandırılmış bir Tavily API anahtarı gerektirir.",
+    "Unknown": "Bilinmiyor"
   }
 }

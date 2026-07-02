@@ -85,34 +85,46 @@ def get_siliconflow_voices() -> list[str]:
 def get_gemini_voices() -> list[str]:
     """
     获取Gemini TTS的声音列表
-    
+
     Returns:
         声音列表，格式为 ["gemini:Zephyr-Female", "gemini:Puck-Male", ...]
     """
-    # Gemini TTS支持的语音列表
+    # Gemini TTS 全部 30 个预置音色 ID（当前版本）
     voices_with_gender = [
-        ("Zephyr", "Female"),
-        ("Puck", "Male"), 
-        ("Charon", "Male"),
-        ("Kore", "Female"),
-        ("Fenrir", "Male"),
+        ("Achernar", "Female"),
+        ("Achird", "Male"),
+        ("Algenib", "Male"),
+        ("Algieba", "Male"),
+        ("Alnilam", "Male"),
         ("Aoede", "Female"),
-        ("Thalia", "Female"),
-        ("Sage", "Male"),
-        ("Echo", "Female"),
-        ("Harmony", "Female"),
-        ("Lux", "Female"),
-        ("Nova", "Female"),
-        ("Vale", "Male"),
-        ("Orion", "Male"),
-        ("Atlas", "Male"),
+        ("Autonoe", "Female"),
+        ("Callirrhoe", "Female"),
+        ("Charon", "Male"),
+        ("Despina", "Female"),
+        ("Enceladus", "Male"),
+        ("Erinome", "Female"),
+        ("Fenrir", "Male"),
+        ("Gacrux", "Female"),
+        ("Iapetus", "Male"),
+        ("Kore", "Female"),
+        ("Laomedeia", "Female"),
+        ("Leda", "Female"),
+        ("Orus", "Male"),
+        ("Puck", "Male"),
+        ("Pulcherrima", "Female"),
+        ("Rasalgethi", "Male"),
+        ("Sadachbia", "Male"),
+        ("Sadaltager", "Male"),
+        ("Schedar", "Male"),
+        ("Sulafat", "Female"),
+        ("Umbriel", "Male"),
+        ("Vindemiatrix", "Female"),
+        ("Zephyr", "Female"),
+        ("Zubenelgenubi", "Male"),
     ]
-    
+
     # 添加gemini:前缀，并格式化为显示名称
-    return [
-        f"gemini:{voice}-{gender}"
-        for voice, gender in voices_with_gender
-    ]
+    return [f"gemini:{voice}-{gender}" for voice, gender in voices_with_gender]
 
 
 def get_mimo_voices() -> list[str]:
@@ -286,7 +298,9 @@ def estimate_no_voice_duration(text: str) -> float:
 
     cjk_chars = len(re.findall(r"[\u4e00-\u9fff]", normalized_text))
     words = len(re.findall(r"[A-Za-z0-9]+", normalized_text))
-    ascii_word_chars = sum(len(word) for word in re.findall(r"[A-Za-z0-9]+", normalized_text))
+    ascii_word_chars = sum(
+        len(word) for word in re.findall(r"[A-Za-z0-9]+", normalized_text)
+    )
     other_text_chars = 0
     for char in normalized_text:
         # Unicode category 以 L 开头表示各语种字母，N 表示数字。前面已经单独
@@ -600,9 +614,7 @@ def get_edge_tts_timeout_seconds() -> Union[float, None]:
       `edge_tts_timeout = 60`；
     - 设置为 0 或负数表示显式禁用超时，保留完全向后兼容。
     """
-    raw_timeout = config.app.get(
-        "edge_tts_timeout", _DEFAULT_EDGE_TTS_TIMEOUT_SECONDS
-    )
+    raw_timeout = config.app.get("edge_tts_timeout", _DEFAULT_EDGE_TTS_TIMEOUT_SECONDS)
     try:
         timeout_seconds = float(raw_timeout)
     except (TypeError, ValueError):
@@ -652,14 +664,10 @@ def _stream_edge_tts_sync_with_timeout(
     while True:
         remaining_seconds = deadline - time.monotonic()
         if remaining_seconds <= 0:
-            raise TimeoutError(
-                f"edge_tts stream timed out after {timeout_seconds:g}s"
-            )
+            raise TimeoutError(f"edge_tts stream timed out after {timeout_seconds:g}s")
 
         try:
-            item_type, payload = stream_queue.get(
-                timeout=min(0.5, remaining_seconds)
-            )
+            item_type, payload = stream_queue.get(timeout=min(0.5, remaining_seconds))
         except queue.Empty:
             continue
 
@@ -688,9 +696,7 @@ def stream_edge_tts_chunks(
     """
     if hasattr(communicate, "stream_sync"):
         if timeout_seconds:
-            _stream_edge_tts_sync_with_timeout(
-                communicate, on_chunk, timeout_seconds
-            )
+            _stream_edge_tts_sync_with_timeout(communicate, on_chunk, timeout_seconds)
             return
 
         for chunk in communicate.stream_sync():
@@ -737,6 +743,7 @@ def azure_tts_v1(
             timeout_seconds = get_edge_tts_timeout_seconds()
 
             with open(voice_file, "wb") as file:
+
                 def _handle_chunk(chunk):
                     chunk_type = chunk["type"]
                     if chunk_type == "audio":
@@ -1018,14 +1025,14 @@ def gemini_tts(
 ) -> Union[SubMaker, None]:
     """
     使用Google Gemini TTS生成语音
-    
+
     Args:
         text: 要转换的文本
         voice_name: 语音名称，如 "Zephyr", "Puck" 等
         voice_rate: 语音速率（当前未使用）
         voice_file: 输出音频文件路径
         voice_volume: 音频音量（当前未使用）
-        
+
     Returns:
         SubMaker对象或None
     """
@@ -1033,54 +1040,50 @@ def gemini_tts(
     import io
     from pydub import AudioSegment
     import google.generativeai as genai
+
     _configure_pydub_ffmpeg(AudioSegment)
-    
+
     try:
         # 配置Gemini API
         api_key = config.app.get("gemini_api_key", "")
         if not api_key:
             logger.error("Gemini API key is not set")
             return None
-            
+
         genai.configure(api_key=api_key)
-        
+
         logger.info(f"start, voice name: {voice_name}, try: 1")
-        
+
         # 使用Gemini TTS API
         model = genai.GenerativeModel("gemini-2.5-flash-preview-tts")
-        
+
         generation_config = {
             "response_modalities": ["AUDIO"],
             "speech_config": {
-                "voice_config": {
-                    "prebuilt_voice_config": {
-                        "voice_name": voice_name
-                    }
-                }
-            }
+                "voice_config": {"prebuilt_voice_config": {"voice_name": voice_name}}
+            },
         }
-        
+
         response = model.generate_content(
-            contents=text,
-            generation_config=generation_config
+            contents=text, generation_config=generation_config
         )
-        
+
         # 检查响应
         if not response.candidates or not response.candidates[0].content:
             logger.error("No audio content received from Gemini TTS")
             return None
-            
+
         # 获取音频数据
         audio_data = None
         for part in response.candidates[0].content.parts:
-            if hasattr(part, 'inline_data') and part.inline_data:
+            if hasattr(part, "inline_data") and part.inline_data:
                 audio_data = part.inline_data.data
                 break
-                
+
         if not audio_data:
             logger.error("No audio data found in response")
             return None
-            
+
         # 音频数据已经是原始字节，不需要base64解码
         if isinstance(audio_data, str):
             # 如果是字符串，则需要base64解码
@@ -1088,28 +1091,28 @@ def gemini_tts(
         else:
             # 如果已经是字节，直接使用
             audio_bytes = audio_data
-        
+
         # 尝试不同的音频格式 - Gemini可能返回不同的格式
         audio_segment = None
-        
+
         # Gemini返回Linear PCM格式，按照文档参数解析
         try:
             audio_segment = AudioSegment.from_file(
-                io.BytesIO(audio_bytes), 
+                io.BytesIO(audio_bytes),
                 format="raw",
                 frame_rate=24000,  # Gemini TTS默认采样率
-                channels=1,        # 单声道
-                sample_width=2     # 16-bit
+                channels=1,  # 单声道
+                sample_width=2,  # 16-bit
             )
         except Exception as e:
             logger.error(f"Failed to load PCM audio: {e}")
             return None
-        
+
         # 导出为MP3格式
         audio_segment.export(voice_file, format="mp3")
-        
+
         logger.info(f"completed, output file: {voice_file}")
-        
+
         # Gemini 拿不到 edge_tts 那种逐词边界事件，因此这里退回到
         # 项目原有的 `subs/offset` 兼容结构，至少保证后续字幕与时长
         # 计算链路可继续工作。
@@ -1120,9 +1123,11 @@ def gemini_tts(
             text=text,
             audio_duration_seconds=audio_duration,
         )
-        
+
     except ImportError as e:
-        logger.error(f"Missing required package for Gemini TTS: {str(e)}. Please install: pip install pydub")
+        logger.error(
+            f"Missing required package for Gemini TTS: {str(e)}. Please install: pip install pydub"
+        )
         return None
     except Exception as e:
         logger.error(f"Gemini TTS failed, error: {str(e)}")
@@ -1202,7 +1207,9 @@ def mimo_tts(
                 raise ValueError("MiMo TTS returned empty audio data")
 
             audio_bytes = base64.b64decode(audio_data)
-            audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format="wav")
+            audio_segment = AudioSegment.from_file(
+                io.BytesIO(audio_bytes), format="wav"
+            )
 
             output_format = utils.parse_extension(voice_file) or "mp3"
             if output_format == "wav":
@@ -1285,7 +1292,10 @@ def elevenlabs_tts(
                 except Exception:
                     pass
 
-                if response.status_code in _NON_RETRYABLE_CODES or error_status in _NON_RETRYABLE_STATUSES:
+                if (
+                    response.status_code in _NON_RETRYABLE_CODES
+                    or error_status in _NON_RETRYABLE_STATUSES
+                ):
                     logger.error(
                         f"ElevenLabs TTS failed (non-retryable) — voice_id: {voice_id}, "
                         f"status: {response.status_code}, error: {error_status or response.text[:200]}. "
@@ -1443,7 +1453,7 @@ def _build_subtitle_formatter():
 
 # 阿拉伯语变音符号和 Tatweel 拉长符在 edge-tts 返回文本中可能出现，
 # 这些字符不影响语义，但会导致脚本文本和字幕 cue 字符串精确匹配失败。
-_ARABIC_DIACRITICS = re.compile("[\u0610-\u061A\u064B-\u065F\u0670\u0640\u06D6-\u06ED]")
+_ARABIC_DIACRITICS = re.compile("[\u0610-\u061a\u064b-\u065f\u0670\u0640\u06d6-\u06ed]")
 
 
 def _normalize_arabic(text: str) -> str:
@@ -1465,7 +1475,9 @@ def _normalize_arabic(text: str) -> str:
     return text
 
 
-def _match_script_line(script_lines: list[str], current_text: str, sub_index: int) -> str:
+def _match_script_line(
+    script_lines: list[str], current_text: str, sub_index: int
+) -> str:
     """
     尝试把当前累计的字幕文本，与脚本中的某一条标准断句匹配起来。
 
@@ -1670,6 +1682,7 @@ def _get_audio_duration_from_submaker(sub_maker: SubMaker):
         return 0.0
     return legacy_offsets[-1][1] / 10000000
 
+
 def _get_audio_duration_from_mp3(mp3_file: str) -> float:
     """
     获取MP3音频时长
@@ -1686,6 +1699,7 @@ def _get_audio_duration_from_mp3(mp3_file: str) -> float:
         logger.error(f"Failed to get audio duration from MP3: {str(e)}")
         return 0.0
 
+
 def get_audio_duration(target: Union[str, SubMaker]) -> float:
     """
     获取音频时长
@@ -1699,6 +1713,7 @@ def get_audio_duration(target: Union[str, SubMaker]) -> float:
     else:
         logger.error(f"Invalid target type: {type(target)}")
         return 0.0
+
 
 if __name__ == "__main__":
     voice_name = "zh-CN-XiaoxiaoMultilingualNeural-V2-Female"

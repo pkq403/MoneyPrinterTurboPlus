@@ -168,6 +168,11 @@
     "Custom Position (% from top)": "Пользовательское положение (% от верхнего края)",
     "Please enter a value between 0 and 100": "Введите значение от 0 до 100",
     "Please enter a valid number": "Введите корректное число",
-    "Please Select a Valid Video Source": "Выберите поддерживаемый источник материалов"
+    "Please Select a Valid Video Source": "Выберите поддерживаемый источник материалов",
+    "Tavily News Settings": "**Настройки новостей Tavily**",
+    "Tavily API Key": "API-ключ Tavily ([Получить ключ](https://tavily.com))",
+    "Search Latest News (Tavily)": "Искать последние новости (Tavily)",
+    "Search Latest News (Tavily) Help": "Получает последние новости по теме видео через Tavily и передаёт их в LLM, чтобы сценарий мог ссылаться на актуальные события. Требуется API-ключ Tavily, настроенный в основных настройках.",
+    "Unknown": "Неизвестно"
   }
 }

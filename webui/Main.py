@@ -108,7 +108,11 @@ def _detect_audio_mime(audio_file: str, audio_bytes: bytes) -> str:
     header = audio_bytes[:12]
     if header.startswith(b"RIFF") and header[8:12] == b"WAVE":
         return "audio/wav"
-    if header.startswith(b"ID3") or header[:2] in (b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"):
+    if header.startswith(b"ID3") or header[:2] in (
+        b"\xff\xfb",
+        b"\xff\xf3",
+        b"\xff\xf2",
+    ):
         return "audio/mp3"
     if header.startswith(b"OggS"):
         return "audio/ogg"
@@ -179,6 +183,7 @@ support_locales = [
     "zh-TW",
     "de-DE",
     "en-US",
+    "es-ES",
     "fr-FR",
     "ru-RU",
     "vi-VN",
@@ -285,12 +290,15 @@ def tr(key):
     loc = locales.get(st.session_state["ui_language"], {})
     return loc.get("Translation", {}).get(key, key)
 
+
 @st.cache_data(ttl=300, show_spinner=False)
 def get_groq_model_ids(api_key: str, base_url: str) -> list[str]:
     if not api_key:
         return []
 
-    normalized_base_url = (base_url or "https://api.groq.com/openai/v1").strip().rstrip("/")
+    normalized_base_url = (
+        (base_url or "https://api.groq.com/openai/v1").strip().rstrip("/")
+    )
     models_url = f"{normalized_base_url}/models"
 
     try:
@@ -314,6 +322,7 @@ def get_groq_model_ids(api_key: str, base_url: str) -> list[str]:
     except Exception as e:
         logger.warning(f"failed to fetch groq models: {e}")
         return []
+
 
 # 创建基础设置折叠框
 if not config.app.get("hide_config", False):
@@ -762,6 +771,14 @@ if not config.app.get("hide_config", False):
             )
             save_keys_to_config("coverr_api_keys", coverr_api_key)
 
+            st.write(tr("Tavily News Settings"))
+            tavily_api_key = config.app.get("tavily_api_key", "")
+            tavily_api_key = st.text_input(
+                tr("Tavily API Key"), value=tavily_api_key, type="password"
+            )
+            if tavily_api_key:
+                config.app["tavily_api_key"] = tavily_api_key
+
 llm_provider = config.app.get("llm_provider", "").lower()
 panel = st.columns(3)
 left_panel = panel[0]
@@ -834,6 +851,18 @@ with left_panel:
             else:
                 params.custom_system_prompt = ""
 
+            tavily_search_enabled = st.checkbox(
+                tr("Search Latest News (Tavily)"),
+                value=st.session_state.get(
+                    "tavily_search_enabled_input",
+                    bool(config.app.get("tavily_search_enabled", False)),
+                ),
+                help=tr("Search Latest News (Tavily) Help"),
+                key="tavily_search_enabled_input",
+            )
+            params.tavily_search_enabled = tavily_search_enabled
+            config.app["tavily_search_enabled"] = tavily_search_enabled
+
         if st.button(
             tr("Generate Video Script and Keywords"), key="auto_generate_script"
         ):
@@ -844,6 +873,7 @@ with left_panel:
                     paragraph_number=params.paragraph_number,
                     video_script_prompt=params.video_script_prompt,
                     custom_system_prompt=params.custom_system_prompt,
+                    enable_news_search=params.tavily_search_enabled,
                 )
                 terms = llm.generate_terms(
                     params.video_subject,
@@ -918,7 +948,8 @@ with middle_panel:
             local_file_types = ["mp4", "mov", "avi", "flv", "mkv", "jpg", "jpeg", "png"]
             uploaded_files = st.file_uploader(
                 tr("Upload Local Files"),
-                type=local_file_types + [file_type.upper() for file_type in local_file_types],
+                type=local_file_types
+                + [file_type.upper() for file_type in local_file_types],
                 accept_multiple_files=True,
             )
 
@@ -1106,6 +1137,7 @@ with middle_panel:
         if selected_tts_server == voice.NO_VOICE_NAME:
             friendly_names = {voice.NO_VOICE_NAME: tr("No Voice")}
         else:
+
             def _friendly(v):
                 if voice.is_elevenlabs_voice(v):
                     parts = v.split(":", 2)
@@ -1116,8 +1148,10 @@ with middle_panel:
                 return (
                     v.replace("Female", tr("Female"))
                     .replace("Male", tr("Male"))
+                    .replace("Unknown", tr("Unknown"))
                     .replace("Neural", "")
                 )
+
             friendly_names = {v: _friendly(v) for v in filtered_voices}
 
         saved_voice_name = config.ui.get("voice_name", "")
@@ -1182,7 +1216,9 @@ with middle_panel:
                     display = parts[2] if len(parts) >= 3 else ""
                     _vi_chars = set("àáâãèéêìíòóôõùúýăđơưÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝĂĐƠƯ")
                     if any(c in _vi_chars for c in display):
-                        play_content = "Xin chào, đây là đoạn âm thanh thử nghiệm giọng nói."
+                        play_content = (
+                            "Xin chào, đây là đoạn âm thanh thử nghiệm giọng nói."
+                        )
                     else:
                         play_content = tr("Voice Example")
                 else:
@@ -1570,11 +1606,13 @@ with right_panel:
     with st.expander(tr("Click to show API Key management"), expanded=False):
         st.subheader(tr("Manage Pexels, Pixabay and Coverr API Keys"))
 
-        col1, col2, col3 = st.tabs([
-            tr("Pexels API Keys"),
-            tr("Pixabay API Keys"),
-            tr("Coverr API Keys"),
-        ])
+        col1, col2, col3 = st.tabs(
+            [
+                tr("Pexels API Keys"),
+                tr("Pixabay API Keys"),
+                tr("Coverr API Keys"),
+            ]
+        )
 
         with col1:
             st.subheader(tr("Pexels API Keys"))
@@ -1598,7 +1636,9 @@ with right_panel:
 
             if config.app["pexels_api_keys"]:
                 delete_key = st.selectbox(
-                    tr("Select Pexels API Key to delete"), config.app["pexels_api_keys"], key="pexels_delete_key"
+                    tr("Select Pexels API Key to delete"),
+                    config.app["pexels_api_keys"],
+                    key="pexels_delete_key",
                 )
                 if st.button(tr("Delete Selected Pexels API Key")):
                     config.app["pexels_api_keys"].remove(delete_key)
@@ -1628,7 +1668,9 @@ with right_panel:
 
             if config.app["pixabay_api_keys"]:
                 delete_key = st.selectbox(
-                    tr("Select Pixabay API Key to delete"), config.app["pixabay_api_keys"], key="pixabay_delete_key"
+                    tr("Select Pixabay API Key to delete"),
+                    config.app["pixabay_api_keys"],
+                    key="pixabay_delete_key",
                 )
                 if st.button(tr("Delete Selected Pixabay API Key")):
                     config.app["pixabay_api_keys"].remove(delete_key)
@@ -1641,7 +1683,10 @@ with right_panel:
             # 与 pexels/pixabay 不同,coverr_api_keys 是 PR 新增配置项,
             # 老用户的 config.toml 不一定包含,这里先兜底初始化为空列表,
             # 防止下面 .append / 索引访问触发 KeyError。
-            if "coverr_api_keys" not in config.app or config.app["coverr_api_keys"] is None:
+            if (
+                "coverr_api_keys" not in config.app
+                or config.app["coverr_api_keys"] is None
+            ):
                 config.app["coverr_api_keys"] = []
 
             if config.app["coverr_api_keys"]:
@@ -1664,7 +1709,9 @@ with right_panel:
 
             if config.app["coverr_api_keys"]:
                 delete_key = st.selectbox(
-                    tr("Select Coverr API Key to delete"), config.app["coverr_api_keys"], key="coverr_delete_key"
+                    tr("Select Coverr API Key to delete"),
+                    config.app["coverr_api_keys"],
+                    key="coverr_delete_key",
                 )
                 if st.button(tr("Delete Selected Coverr API Key")):
                     config.app["coverr_api_keys"].remove(delete_key)

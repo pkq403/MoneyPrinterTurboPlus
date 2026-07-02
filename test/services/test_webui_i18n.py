@@ -71,3 +71,27 @@ class TestWebuiI18n(unittest.TestCase):
 
         self.assertIsNotNone(support_locales)
         self.assertIn("ru-RU", support_locales)
+
+    def test_script_language_options_include_spanish_spain(self):
+        """
+        España 西班牙语（es-ES）必须作为独立选项出现，区别于拉美西班牙语
+        （es-MX、es-AR 等）。这样脚本才会使用 vosotros 和西班牙本土词汇，
+        TTS 也可以配合 es-ES-* 系列音色。
+        """
+        tree = ast.parse(WEBUI_MAIN.read_text(encoding="utf-8"))
+        support_locales = None
+
+        for node in tree.body:
+            if not isinstance(node, ast.Assign):
+                continue
+            if any(
+                isinstance(target, ast.Name) and target.id == "support_locales"
+                for target in node.targets
+            ):
+                support_locales = ast.literal_eval(node.value)
+                break
+
+        self.assertIsNotNone(support_locales)
+        self.assertIn("es-ES", support_locales)
+        # 拉美西班牙语变体不应混入，避免用户误选成拉美口音
+        self.assertNotIn("es-MX", support_locales)

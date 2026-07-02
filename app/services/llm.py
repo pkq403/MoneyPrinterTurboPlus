@@ -9,6 +9,7 @@ from openai import AzureOpenAI, OpenAI
 from openai.types.chat import ChatCompletion
 
 from app.config import config
+from app.services import tavily
 
 _max_retries = 5
 _DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
@@ -19,7 +20,9 @@ MAX_SCRIPT_PROMPT_LENGTH = 2000
 MAX_SCRIPT_SYSTEM_PROMPT_LENGTH = 8000
 _THINK_BLOCK_RE = re.compile(r"<think\b[^>]*>.*?</think>", re.IGNORECASE | re.DOTALL)
 _UNCLOSED_THINK_BLOCK_RE = re.compile(r"<think\b[^>]*>.*$", re.IGNORECASE | re.DOTALL)
-_URL_USERINFO_RE = re.compile(r"((?:https?|wss?)://)([^/\s?#@]*:[^/\s?#@]*@)", re.IGNORECASE)
+_URL_USERINFO_RE = re.compile(
+    r"((?:https?|wss?)://)([^/\s?#@]*:[^/\s?#@]*@)", re.IGNORECASE
+)
 _SENSITIVE_QUERY_RE = re.compile(
     r"([?&](?:api[_-]?key|access[_-]?token|token|key|secret|password)=)([^&#\s]+)",
     re.IGNORECASE,
@@ -317,38 +320,38 @@ def _generate_response(prompt: str) -> str:
                     base_url = config.app.get("pollinations_base_url", "")
                     if not base_url:
                         base_url = "https://text.pollinations.ai/openai"
-                    model_name = config.app.get("pollinations_model_name", "openai-fast")
-                   
+                    model_name = config.app.get(
+                        "pollinations_model_name", "openai-fast"
+                    )
+
                     # Prepare the payload
                     payload = {
                         "model": model_name,
-                        "messages": [
-                            {"role": "user", "content": prompt}
-                        ],
-                        "seed": 101  # Optional but helps with reproducibility
+                        "messages": [{"role": "user", "content": prompt}],
+                        "seed": 101,  # Optional but helps with reproducibility
                     }
-                    
+
                     # Optional parameters if configured
                     if config.app.get("pollinations_private"):
                         payload["private"] = True
                     if config.app.get("pollinations_referrer"):
                         payload["referrer"] = config.app.get("pollinations_referrer")
-                    
-                    headers = {
-                        "Content-Type": "application/json"
-                    }
-                    
+
+                    headers = {"Content-Type": "application/json"}
+
                     # Make the API request
                     response = requests.post(base_url, headers=headers, json=payload)
                     response.raise_for_status()
                     result = response.json()
-                    
+
                     if result and "choices" in result and len(result["choices"]) > 0:
                         content = result["choices"][0]["message"]["content"]
                         return _normalize_text_response(content, llm_provider)
                     else:
-                        raise Exception(f"[{llm_provider}] returned an invalid response format")
-                        
+                        raise Exception(
+                            f"[{llm_provider}] returned an invalid response format"
+                        )
+
                 except requests.exceptions.RequestException as e:
                     raise Exception(f"[{llm_provider}] request failed: {str(e)}")
                 except Exception as e:
@@ -357,7 +360,11 @@ def _generate_response(prompt: str) -> str:
             elif llm_provider == "litellm":
                 model_name = config.app.get("litellm_model_name")
 
-            if llm_provider not in ["pollinations", "ollama", "litellm"]:  # Skip validation for providers that don't require API key
+            if llm_provider not in [
+                "pollinations",
+                "ollama",
+                "litellm",
+            ]:  # Skip validation for providers that don't require API key
                 if not api_key:
                     raise ValueError(
                         f"{llm_provider}: api_key is not set, please set it in the config.toml file."
@@ -401,7 +408,11 @@ def _generate_response(prompt: str) -> str:
                 if not base_url:
                     genai.configure(api_key=api_key, transport="rest")
                 else:
-                    genai.configure(api_key=api_key, transport="rest", client_options={'api_endpoint': base_url})
+                    genai.configure(
+                        api_key=api_key,
+                        transport="rest",
+                        client_options={"api_endpoint": base_url},
+                    )
 
                 generation_config = {
                     "temperature": 0.5,
@@ -465,16 +476,18 @@ def _generate_response(prompt: str) -> str:
                 )
                 result = response.json()
                 logger.info(result)
-                return _normalize_text_response(result["result"]["response"], llm_provider)
+                return _normalize_text_response(
+                    result["result"]["response"], llm_provider
+                )
 
             if llm_provider == "ernie":
                 response = requests.post(
-                    "https://aip.baidubce.com/oauth/2.0/token", 
+                    "https://aip.baidubce.com/oauth/2.0/token",
                     params={
                         "grant_type": "client_credentials",
                         "client_id": api_key,
                         "client_secret": secret_key,
-                    }
+                    },
                 )
                 access_token = response.json().get("access_token")
                 url = f"{base_url}?access_token={access_token}"
@@ -546,7 +559,7 @@ def _generate_response(prompt: str) -> str:
                     )
 
             if llm_provider == "modelscope":
-                content = ''
+                content = ""
                 client = OpenAI(
                     api_key=api_key,
                     base_url=base_url,
@@ -555,7 +568,7 @@ def _generate_response(prompt: str) -> str:
                     model=model_name,
                     messages=[{"role": "user", "content": prompt}],
                     extra_body={"enable_thinking": False},
-                    stream=True
+                    stream=True,
                 )
                 if response:
                     for chunk in response:
@@ -564,10 +577,10 @@ def _generate_response(prompt: str) -> str:
                         delta = chunk.choices[0].delta
                         if delta and delta.content:
                             content += delta.content
-                    
+
                     if not content.strip():
                         raise ValueError("Empty content in stream response")
-                    
+
                     return _normalize_text_response(content, llm_provider)
                 else:
                     raise Exception(f"[{llm_provider}] returned an empty response")
@@ -623,8 +636,7 @@ def _normalize_script_paragraph_number(paragraph_number: int | None) -> int:
         # WebUI 和 API 都会限制范围；这里兜底处理内部调用，避免异常参数直接扩大
         # LLM 生成成本或生成空结果。
         logger.warning(
-            "script paragraph_number is out of range and will be clamped: "
-            f"{value}"
+            f"script paragraph_number is out of range and will be clamped: {value}"
         )
         return max(MIN_SCRIPT_PARAGRAPH_NUMBER, min(value, MAX_SCRIPT_PARAGRAPH_NUMBER))
 
@@ -637,6 +649,7 @@ def build_script_prompt(
     paragraph_number: int = 1,
     video_script_prompt: str = "",
     custom_system_prompt: str = "",
+    news_context: str = "",
 ) -> str:
     paragraph_number = _normalize_script_paragraph_number(paragraph_number)
     video_script_prompt = _limit_script_text(
@@ -657,6 +670,16 @@ def build_script_prompt(
 """.rstrip()
     if language:
         prompt += f"\n- language: {language}"
+    if news_context:
+        # Tavily 最新新闻摘要：作为运行时事实注入，让脚本可以引用时事。
+        # 要求模型自然融入而非照搬片段，也不暴露来源，避免成稿出现“据新闻报道”这类表述。
+        prompt += f"""
+
+# Latest News Context:
+Use the following up-to-date facts naturally in the script where relevant. Do not mention "news", "according to", or cite sources. Do not paste the snippets verbatim.
+
+{news_context}
+""".rstrip()
     if video_script_prompt:
         prompt += f"""
 
@@ -673,6 +696,7 @@ def generate_script(
     paragraph_number: int = 1,
     video_script_prompt: str = "",
     custom_system_prompt: str = "",
+    enable_news_search: bool = False,
 ) -> str:
     paragraph_number = _normalize_script_paragraph_number(paragraph_number)
     video_script_prompt = _limit_script_text(
@@ -681,19 +705,27 @@ def generate_script(
     custom_system_prompt = _limit_script_text(
         custom_system_prompt, MAX_SCRIPT_SYSTEM_PROMPT_LENGTH, "custom_system_prompt"
     )
+    # 可选的 Tavily 最新新闻检索：仅在显式开启且配置了 API key 时生效。
+    # 未配置或检索失败时返回空字符串，prompt 与历史行为完全一致，不会破坏脚本生成。
+    news_context = ""
+    if enable_news_search:
+        news_context = tavily.search_news(video_subject)
     prompt = build_script_prompt(
         video_subject=video_subject,
         language=language,
         paragraph_number=paragraph_number,
         video_script_prompt=video_script_prompt,
         custom_system_prompt=custom_system_prompt,
+        news_context=news_context,
     )
     final_script = ""
     logger.info(
         "generating video script: "
         f"subject={video_subject}, paragraph_number={paragraph_number}, "
         f"has_custom_prompt={bool(video_script_prompt.strip())}, "
-        f"has_custom_system_prompt={bool(custom_system_prompt.strip())}"
+        f"has_custom_system_prompt={bool(custom_system_prompt.strip())}, "
+        f"news_search={enable_news_search}, "
+        f"has_news_context={bool(news_context)}"
     )
 
     def format_response(response):
@@ -776,10 +808,7 @@ def generate_terms(
         # 的 4 个示例误导，导致长文案只返回少量关键词，影响素材覆盖度。
         example_terms = [
             "opening visual topic",
-            *[
-                f"script visual topic {index}"
-                for index in range(2, max(amount, 1))
-            ],
+            *[f"script visual topic {index}" for index in range(2, max(amount, 1))],
             "final visual topic",
         ]
         output_example = json.dumps(example_terms[:amount], ensure_ascii=False)
@@ -821,9 +850,7 @@ def generate_terms(
 Please note that you must use English for generating video search terms; Chinese is not accepted.
 """.strip()
 
-    logger.info(
-        f"subject: {video_subject}, match_script_order: {match_script_order}"
-    )
+    logger.info(f"subject: {video_subject}, match_script_order: {match_script_order}")
 
     search_terms = []
     response = ""
@@ -1010,9 +1037,9 @@ Write engaging publishing metadata for a short video that will be posted on {lab
 ## Constraints
 1. Respond ONLY with a single valid minified JSON object. No markdown, no code fences, no commentary.
 2. The JSON must contain exactly these keys: "title", "caption", "hashtags".
-3. "title": a catchy hook, at most {spec['title_max']} characters.
-4. "caption": an engaging description that ends with a call to action, at most {spec['caption_max']} characters. Do not put hashtags inside the caption.
-5. "hashtags": a JSON array of exactly {spec['hashtag_count']} strings. Each must start with "#", contain no spaces, and be relevant to the topic and to {label}.
+3. "title": a catchy hook, at most {spec["title_max"]} characters.
+4. "caption": an engaging description that ends with a call to action, at most {spec["caption_max"]} characters. Do not put hashtags inside the caption.
+5. "hashtags": a JSON array of exactly {spec["hashtag_count"]} strings. Each must start with "#", contain no spaces, and be relevant to the topic and to {label}.
 6. {language_instruction}
 
 ## Output Example
@@ -1069,9 +1096,7 @@ def _fallback_social_metadata(
     return {
         "title": _clamp_text(title, spec["title_max"]),
         "caption": _clamp_text(script or subject, spec["caption_max"]),
-        "hashtags": _normalize_hashtags(
-            DEFAULT_SOCIAL_HASHTAGS, spec["hashtag_count"]
-        ),
+        "hashtags": _normalize_hashtags(DEFAULT_SOCIAL_HASHTAGS, spec["hashtag_count"]),
     }
 
 
@@ -1102,9 +1127,7 @@ def generate_social_metadata(
         language=language,
         platform=platform,
     )
-    logger.info(
-        f"generating social metadata: platform={platform}, language={language}"
-    )
+    logger.info(f"generating social metadata: platform={platform}, language={language}")
 
     response = ""
     for i in range(_max_retries):
@@ -1140,4 +1163,3 @@ if __name__ == "__main__":
     )
     print("######################")
     print(search_terms)
-    

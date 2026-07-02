@@ -164,6 +164,11 @@
     "Coverr API Key deleted successfully": "Coverr API 密钥删除成功",
     "Advanced Video Settings": "高级视频设置",
     "Video Encoder": "视频编码器",
-    "Video Encoder Help": "高级选项。默认 libx264 最稳定；选择硬件编码器时，如果当前 FFmpeg、显卡或驱动不可用，会自动回退到 libx264。"
+    "Video Encoder Help": "高级选项。默认 libx264 最稳定；选择硬件编码器时，如果当前 FFmpeg、显卡或驱动不可用，会自动回退到 libx264。",
+    "Tavily News Settings": "**Tavily 新闻设置**",
+    "Tavily API Key": "Tavily API 密钥（[获取密钥](https://tavily.com)）",
+    "Search Latest News (Tavily)": "检索最新新闻（Tavily）",
+    "Search Latest News (Tavily) Help": "通过 Tavily 检索视频主题的最新新闻并喂给大模型，让脚本能引用时事。需要在基础设置中配置 Tavily API 密钥。",
+    "Unknown": "未知"
   }
 }

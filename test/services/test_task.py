@@ -20,10 +20,11 @@ RUN_INTEGRATION_TESTS = os.environ.get("MPT_RUN_INTEGRATION_TESTS", "").lower() 
     "yes",
 }
 
+
 class TestTaskService(unittest.TestCase):
     def setUp(self):
         pass
-    
+
     def tearDown(self):
         pass
 
@@ -41,7 +42,13 @@ class TestTaskService(unittest.TestCase):
             custom_system_prompt="Only write short narration.",
         )
 
-        with patch.object(tm.llm, "generate_script", return_value="生成的文案") as generate:
+        # 锁定 tavily 开关为关闭，避免 config.toml 的全局默认影响断言。
+        with (
+            patch.dict(tm.config.app, {"tavily_search_enabled": False}),
+            patch.object(
+                tm.llm, "generate_script", return_value="生成的文案"
+            ) as generate,
+        ):
             result = tm.generate_script("task-id", params)
 
         self.assertEqual(result, "生成的文案")
@@ -51,6 +58,7 @@ class TestTaskService(unittest.TestCase):
             paragraph_number=2,
             video_script_prompt="语气轻松",
             custom_system_prompt="Only write short narration.",
+            enable_news_search=False,
         )
 
     def test_generate_terms_uses_script_order_mode_when_enabled(self):
@@ -64,7 +72,9 @@ class TestTaskService(unittest.TestCase):
             match_materials_to_script=True,
         )
 
-        with patch.object(tm.llm, "generate_terms", return_value=["city", "train"]) as generate:
+        with patch.object(
+            tm.llm, "generate_terms", return_value=["city", "train"]
+        ) as generate:
             result = tm.generate_terms("task-id", params, "先城市，再地铁")
 
         self.assertEqual(result, ["city", "train"])
@@ -74,7 +84,7 @@ class TestTaskService(unittest.TestCase):
             amount=8,
             match_script_order=True,
         )
-    
+
     def test_generate_audio_uses_custom_file_inside_task_directory(self):
         task_id = "test-custom-audio-safe"
         task_dir = utils.task_dir(task_id)
@@ -207,7 +217,9 @@ class TestTaskService(unittest.TestCase):
             shutil.rmtree(task_dir, ignore_errors=True)
 
         self.assertTrue(subtitle_path.endswith("subtitle.srt"))
-        create.assert_called_once_with(audio_file=audio_file, subtitle_file=subtitle_path)
+        create.assert_called_once_with(
+            audio_file=audio_file, subtitle_file=subtitle_path
+        )
         correct.assert_called_once_with(
             subtitle_file=subtitle_path, video_script="Hello world."
         )
@@ -257,13 +269,15 @@ class TestTaskService(unittest.TestCase):
     )
     def test_task_local_materials(self):
         task_id = "00000000-0000-0000-0000-000000000000"
-        video_materials=[]
+        video_materials = []
         for i in range(1, 4):
-            video_materials.append(MaterialInfo(
-                provider="local",
-                url=os.path.join(resources_dir, f"{i}.png"),
-                duration=0
-            ))
+            video_materials.append(
+                MaterialInfo(
+                    provider="local",
+                    url=os.path.join(resources_dir, f"{i}.png"),
+                    duration=0,
+                )
+            )
 
         params = VideoParams(
             video_subject="金钱的作用",
@@ -293,11 +307,11 @@ class TestTaskService(unittest.TestCase):
             stroke_color="#000000",
             stroke_width=1.5,
             n_threads=2,
-            paragraph_number=1
+            paragraph_number=1,
         )
         result = tm.start(task_id=task_id, params=params)
         print(result)
-    
+
 
 if __name__ == "__main__":
     unittest.main()

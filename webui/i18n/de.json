@@ -162,6 +162,11 @@
     "Coverr API Key added successfully": "Coverr API-Schlüssel erfolgreich hinzugefügt",
     "Select Coverr API Key to delete": "Coverr API-Schlüssel zum Löschen auswählen",
     "Delete Selected Coverr API Key": "Ausgewählten Coverr API-Schlüssel löschen",
-    "Coverr API Key deleted successfully": "Coverr API-Schlüssel erfolgreich gelöscht"
+    "Coverr API Key deleted successfully": "Coverr API-Schlüssel erfolgreich gelöscht",
+    "Tavily News Settings": "**Tavily-Nachrichteinstellungen**",
+    "Tavily API Key": "Tavily API-Schlüssel ([Schlüssel erhalten](https://tavily.com))",
+    "Search Latest News (Tavily)": "Aktuelle Nachrichten suchen (Tavily)",
+    "Search Latest News (Tavily) Help": "Ruft die aktuellsten Nachrichten zum Videothema über Tavily ab und übergibt sie an das LLM, damit das Skript aktuelle Ereignisse verwenden kann. Erfordert einen in den Grundeinstellungen konfigurierten Tavily-API-Schlüssel.",
+    "Unknown": "Unbekannt"
   }
 }
